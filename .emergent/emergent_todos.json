@@ -1,0 +1,38 @@
+[
+  {
+    "content": "Phase 2: Get design guidelines from design_agent",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 2: Backend - models & CRUD endpoints",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 2: Frontend - app shell + collapsible sidebar + dark theme + API client",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 2: Daily Focus page (1-3-5, timeblocking, Pomodoro drawer, rollover)",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 2: Growth Hub page (top cards, trackers grid, Quick Log modal, backlog accordion, fitness)",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 2: Weekly Review 4-step wizard",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 2: Settings page",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 2: All user stories covered in development",
+    "status": "completed"
+  },
+  {
+    "content": "Phase 2: End to End Testing using Testing Agent",
+    "status": "completed"
+  }
+]

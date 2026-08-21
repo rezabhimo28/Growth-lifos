@@ -1,0 +1,12 @@
+/* App-level styles. No global centering (design requirement). */
+.App {
+    min-height: 100vh;
+}
+
+/* Circular timer ring helper */
+.timer-ring {
+    background: conic-gradient(
+        hsl(158 64% 40%) var(--ring-deg, 0deg),
+        hsl(240 6% 14%) 0deg
+    );
+}
