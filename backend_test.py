@@ -446,6 +446,148 @@ class LifeOSTester:
         # Get updated settings
         self.test("Get Updated Settings", "GET", "/settings", 200)
 
+    # ==================== PHASE 3: CONTENT RATING ====================
+    def test_content_rating(self):
+        self.log("\n=== Testing Phase 3: Content Rating ===", "INFO")
+        
+        # Create a new content item for rating test
+        success, content = self.test("Create Content for Rating", "POST", "/content", 200, {
+            "title": "Test Book for Rating",
+            "type": "book",
+            "status": "IN_PROGRESS",
+            "total_units": 100,
+            "current_progress": 100
+        })
+        
+        if not success:
+            self.log("Failed to create content for rating test", "FAIL")
+            return
+        
+        content_id = content["id"]
+        self.created_ids["content"].append(content_id)
+        
+        # Mark as completed with rating
+        success, updated = self.test("Mark Completed with Rating", "PUT", f"/content/{content_id}", 200, {
+            "status": "COMPLETED",
+            "rating": 4
+        })
+        
+        if success:
+            if updated.get("rating") == 4 and updated.get("status") == "COMPLETED":
+                self.log("Rating persisted correctly: 4 stars", "PASS")
+            else:
+                self.log(f"Rating not persisted correctly. Got: {updated.get('rating')}, Status: {updated.get('status')}", "FAIL")
+        
+        # Update rating to 5 stars
+        self.test("Update Rating to 5 Stars", "PUT", f"/content/{content_id}", 200, {
+            "rating": 5
+        })
+
+    # ==================== PHASE 3: PROGRESS HISTORY ====================
+    def test_progress_history(self):
+        self.log("\n=== Testing Phase 3: Progress History ===", "INFO")
+        
+        # Create content for history test
+        success, content = self.test("Create Content for History", "POST", "/content", 200, {
+            "title": "Test Podcast for History",
+            "type": "podcast",
+            "status": "IN_PROGRESS",
+            "total_units": 180,
+            "current_progress": 0
+        })
+        
+        if not success:
+            self.log("Failed to create content for history test", "FAIL")
+            return
+        
+        content_id = content["id"]
+        self.created_ids["content"].append(content_id)
+        
+        # Log multiple progress entries with Active Recall notes
+        self.test("Log Progress 1 with Note", "POST", f"/content/{content_id}/log", 200, {
+            "content_id": content_id,
+            "increment": 30,
+            "note": "First Active Recall: Key insight about productivity",
+            "date": self.get_today()
+        })
+        
+        self.test("Log Progress 2 with Note", "POST", f"/content/{content_id}/log", 200, {
+            "content_id": content_id,
+            "increment": 45,
+            "note": "Second Active Recall: Important concept about focus",
+            "date": self.get_today()
+        })
+        
+        self.test("Log Progress 3 with Note", "POST", f"/content/{content_id}/log", 200, {
+            "content_id": content_id,
+            "increment": 60,
+            "note": "Third Active Recall: Learned about time management",
+            "date": self.get_today()
+        })
+        
+        # Get progress logs filtered by content_id
+        success, logs = self.test("Get Progress History for Content", "GET", "/progress-logs", 200, 
+                                  params={"content_id": content_id})
+        
+        if success:
+            if len(logs) >= 3:
+                self.log(f"Progress history returned {len(logs)} logs", "PASS")
+                # Check if sorted by newest first (created_at desc)
+                if logs[0].get("increment") == 60:
+                    self.log("Logs sorted correctly (newest first)", "PASS")
+                else:
+                    self.log("Logs may not be sorted correctly", "FAIL")
+                
+                # Verify all logs have required fields
+                for log in logs:
+                    if all(k in log for k in ["increment", "note", "unit_label", "date"]):
+                        continue
+                    else:
+                        self.log(f"Log missing required fields: {log}", "FAIL")
+                        break
+                else:
+                    self.log("All logs have required fields (increment, note, unit_label, date)", "PASS")
+            else:
+                self.log(f"Expected at least 3 logs, got {len(logs)}", "FAIL")
+
+    # ==================== PHASE 3: DATA EXPORT ====================
+    def test_data_export(self):
+        self.log("\n=== Testing Phase 3: Data Export ===", "INFO")
+        
+        success, export_data = self.test("Export All Data", "GET", "/export", 200)
+        
+        if success:
+            # Verify required top-level keys
+            required_keys = ["app", "exported_at", "version", "collections"]
+            for key in required_keys:
+                if key in export_data:
+                    self.log(f"Export has '{key}' key ✓", "PASS")
+                else:
+                    self.log(f"Export missing '{key}' key", "FAIL")
+            
+            # Verify collections structure
+            if "collections" in export_data:
+                collections = export_data["collections"]
+                expected_collections = [
+                    "monthly_goals", "weekly_milestones", "daily_tasks",
+                    "content_library", "progress_logs", "fitness_logs",
+                    "weekly_reviews", "settings"
+                ]
+                
+                for coll in expected_collections:
+                    if coll in collections and isinstance(collections[coll], list):
+                        self.log(f"Collection '{coll}' present and is array ✓", "PASS")
+                    else:
+                        self.log(f"Collection '{coll}' missing or not an array", "FAIL")
+                
+                # Verify app metadata
+                if export_data.get("app") == "Personal Growth & LifeOS":
+                    self.log("App name correct", "PASS")
+                if export_data.get("version") == 1:
+                    self.log("Version correct", "PASS")
+            else:
+                self.log("Export missing 'collections' key", "FAIL")
+
     # ==================== CLEANUP ====================
     def cleanup(self):
         self.log("\n=== Cleanup ===", "INFO")
@@ -491,6 +633,11 @@ class LifeOSTester:
             self.test_growth_dashboard()
             self.test_weekly_review()
             self.test_settings()
+            
+            # Phase 3 tests
+            self.test_content_rating()
+            self.test_progress_history()
+            self.test_data_export()
             
         finally:
             self.cleanup()

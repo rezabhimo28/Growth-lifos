@@ -59,4 +59,7 @@ export const getPendingTasks = (week_start) =>
 export const getSettings = () => client.get("/settings").then((r) => r.data);
 export const updateSettings = (data) => client.put("/settings", data).then((r) => r.data);
 
+// ------------------------- Export -------------------------
+export const exportData = () => client.get("/export").then((r) => r.data);
+
 export default client;

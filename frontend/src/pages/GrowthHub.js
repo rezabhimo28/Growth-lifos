@@ -7,6 +7,8 @@ import { TrackerCard, TYPE_META } from "@/components/growth/TrackerCard";
 import { QuickLogSheet } from "@/components/growth/QuickLogSheet";
 import { AddContentDialog } from "@/components/growth/AddContentDialog";
 import { FitnessDialog } from "@/components/growth/FitnessDialog";
+import { RatingDialog } from "@/components/growth/RatingDialog";
+import { ProgressHistorySheet } from "@/components/growth/ProgressHistorySheet";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +32,10 @@ export default function GrowthHub() {
   const [quickLogOpen, setQuickLogOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [fitnessOpen, setFitnessOpen] = useState(false);
+  const [ratingItem, setRatingItem] = useState(null);
+  const [ratingOpen, setRatingOpen] = useState(false);
+  const [historyItem, setHistoryItem] = useState(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -63,10 +69,22 @@ export default function GrowthHub() {
     await load();
   };
 
-  const handleComplete = async (item) => {
-    await updateContent(item.id, { status: "COMPLETED" });
-    toast.success(`Marked "${item.title}" completed`);
+  const handleComplete = (item) => {
+    setRatingItem(item);
+    setRatingOpen(true);
+  };
+
+  const handleSaveRating = async (item, rating) => {
+    const payload = { status: "COMPLETED" };
+    if (rating != null) payload.rating = rating;
+    await updateContent(item.id, payload);
+    toast.success(rating ? `Rated "${item.title}" ${rating}★` : `Marked "${item.title}" completed`);
     await load();
+  };
+
+  const handleHistory = (item) => {
+    setHistoryItem(item);
+    setHistoryOpen(true);
   };
 
   const handleDelete = async (item) => {
@@ -147,7 +165,7 @@ export default function GrowthHub() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-3">
             {active.map((item) => (
               <TrackerCard key={item.id} item={item} onQuickLog={handleQuickLog}
-                onComplete={handleComplete} onDelete={handleDelete} />
+                onComplete={handleComplete} onDelete={handleDelete} onHistory={handleHistory} />
             ))}
           </div>
         )}
@@ -235,6 +253,8 @@ export default function GrowthHub() {
       <QuickLogSheet open={quickLogOpen} onOpenChange={setQuickLogOpen} item={quickLogItem} onSave={handleSaveLog} />
       <AddContentDialog open={addOpen} onOpenChange={setAddOpen} onSave={handleAddContent} />
       <FitnessDialog open={fitnessOpen} onOpenChange={setFitnessOpen} onSave={handleAddFitness} />
+      <RatingDialog open={ratingOpen} onOpenChange={setRatingOpen} item={ratingItem} onSave={handleSaveRating} />
+      <ProgressHistorySheet open={historyOpen} onOpenChange={setHistoryOpen} item={historyItem} />
     </PageTransition>
   );
 }

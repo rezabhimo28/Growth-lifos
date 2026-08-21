@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CalendarClock, Timer, Star, User, Save } from "lucide-react";
+import { CalendarClock, Timer, Star, User, Save, Download } from "lucide-react";
 import { PageHeader, PageTransition } from "@/components/Shared";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { getSettings, updateSettings } from "@/lib/api";
+import { getSettings, updateSettings, exportData } from "@/lib/api";
 
 const Row = ({ icon: Icon, title, desc, children }) => (
   <div className="flex items-center justify-between gap-4 py-4">
@@ -32,6 +32,7 @@ const Row = ({ icon: Icon, title, desc, children }) => (
 export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [s, setS] = useState(null);
 
   useEffect(() => {
@@ -53,6 +54,24 @@ export default function Settings() {
       toast.success("Settings saved");
     } catch { toast.error("Could not save settings"); }
     finally { setSaving(false); }
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const data = await exportData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `lifeos-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Backup downloaded");
+    } catch { toast.error("Export failed"); }
+    finally { setExporting(false); }
   };
 
   return (
@@ -102,6 +121,14 @@ export default function Settings() {
                   </Select>
                 </Row>
               </div>
+            </Card>
+
+            <Card className="border-border bg-card px-5">
+              <Row icon={Download} title="Export data" desc="Download all goals, tasks & progress as JSON.">
+                <Button data-testid="settings-export-button" variant="outline" onClick={handleExport} disabled={exporting}>
+                  <Download className="mr-1.5 h-4 w-4" /> {exporting ? "Exporting…" : "Export JSON"}
+                </Button>
+              </Row>
             </Card>
 
             <div className="flex justify-end">

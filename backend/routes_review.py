@@ -95,6 +95,27 @@ async def get_settings():
     return doc
 
 
+# ------------------------- Data Export -------------------------
+@router.get("/export")
+async def export_data():
+    """Export all user data as a single JSON payload for backup."""
+    collections = [
+        "monthly_goals", "weekly_milestones", "daily_tasks",
+        "content_library", "progress_logs", "fitness_logs",
+        "weekly_reviews", "settings",
+    ]
+    data = {}
+    for name in collections:
+        docs = await db[name].find({}, {"_id": 0}).to_list(100000)
+        data[name] = docs
+    return {
+        "app": "Personal Growth & LifeOS",
+        "exported_at": now_iso(),
+        "version": 1,
+        "collections": data,
+    }
+
+
 @router.put("/settings", response_model=Settings)
 async def update_settings(payload: SettingsUpdate):
     update = {k: v for k, v in payload.model_dump(exclude_unset=True).items()}

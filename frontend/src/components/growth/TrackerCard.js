@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { BookOpen, Film, Mic, GraduationCap, Plus, MoreVertical, Trash2, CheckCircle2 } from "lucide-react";
+import { BookOpen, Film, Mic, GraduationCap, Plus, MoreVertical, Trash2, CheckCircle2, History } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { StarRating } from "@/components/growth/StarRating";
 
 export const TYPE_META = {
   book: { icon: BookOpen, label: "Book" },
@@ -25,7 +26,7 @@ const StatusBadge = ({ status }) => {
   return <Badge variant="secondary" className="text-muted-foreground">Backlog</Badge>;
 };
 
-export const TrackerCard = ({ item, onQuickLog, onDelete, onComplete }) => {
+export const TrackerCard = ({ item, onQuickLog, onDelete, onComplete, onHistory }) => {
   const meta = TYPE_META[item.type] || TYPE_META.book;
   const Icon = meta.icon;
   const pct = item.total_units > 0 ? Math.round((item.current_progress / item.total_units) * 100) : 0;
@@ -50,6 +51,9 @@ export const TrackerCard = ({ item, onQuickLog, onDelete, onComplete }) => {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem data-testid="tracker-history" onClick={() => onHistory(item)}>
+                <History className="mr-2 h-4 w-4" /> View history
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onComplete(item)}>
                 <CheckCircle2 className="mr-2 h-4 w-4" /> Mark completed
               </DropdownMenuItem>
@@ -68,7 +72,12 @@ export const TrackerCard = ({ item, onQuickLog, onDelete, onComplete }) => {
             </span>
           </div>
           <Progress value={pct} className="h-2 bg-secondary" />
-          <div className="mt-1 text-right text-xs font-medium tabular-nums text-emerald-400">{pct}%</div>
+          <div className="mt-1 flex items-center justify-between">
+            {item.rating ? (
+              <StarRating value={item.rating} readOnly size={13} />
+            ) : <span />}
+            <div className="text-right text-xs font-medium tabular-nums text-emerald-400">{pct}%</div>
+          </div>
         </div>
 
         <Button
